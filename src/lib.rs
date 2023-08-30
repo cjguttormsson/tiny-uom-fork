@@ -8,7 +8,7 @@
 //!
 //! ## Usage
 //! ```
-//! #![feature(const_generics, const_evaluatable_checked)]
+//! #![feature(adt_const_params, generic_const_exprs)]
 //! #![allow(incomplete_features)]
 //! use tiny_uom::values::{kg, m, s};
 //!
@@ -32,13 +32,18 @@
     clippy::pedantic,
     missing_docs,
     missing_debug_implementations,
-    broken_intra_doc_links,
+    rustdoc::broken_intra_doc_links,
     unsafe_code
 )]
 #![allow(incomplete_features)]
-#![feature(const_generics, const_evaluatable_checked)]
+#![feature(adt_const_params)]
+#![feature(generic_const_exprs)]
 
 use std::{fmt, ops};
+use std::clone::Clone;
+use std::iter::Iterator;
+use std::marker::ConstParamTy;
+use std::result::Result::Ok;
 
 mod si;
 pub use si::{units, values};
@@ -67,7 +72,7 @@ pub use si::{units, values};
 /// ```
 ///
 /// [`SI`]: https://jcgm.bipm.org/vim/en/1.16.html
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, ConstParamTy, Copy, Debug, Eq, PartialEq)]
 #[allow(non_snake_case)]
 pub struct Unit {
     pub(crate) m: i8,
@@ -81,6 +86,7 @@ pub struct Unit {
 
 impl Unit {
     /// Invert this unit by negating all exponents.
+    #[must_use]
     pub const fn inv(self) -> Self {
         Self {
             m: -self.m,
@@ -94,6 +100,7 @@ impl Unit {
     }
 
     /// Multiply two units and return the resulting unit.
+    #[must_use]
     pub const fn mul(self, rhs: Self) -> Self {
         Self {
             m: self.m + rhs.m,
@@ -107,6 +114,7 @@ impl Unit {
     }
 
     /// Divide two units and return the resulting unit.
+    #[must_use]
     pub const fn div(self, rhs: Self) -> Self {
         Self {
             m: self.m - rhs.m,
@@ -137,9 +145,9 @@ impl fmt::Display for Unit {
 
         for (idx, (name, unit)) in units.enumerate() {
             if *unit == 1 {
-                write!(f, "{}", name)?;
+                write!(f, "{name}")?;
             } else {
-                write!(f, "{}^{}", name, unit)?;
+                write!(f, "{name}^{unit}")?;
             }
             if idx + 1 != len {
                 write!(f, " * ")?;
@@ -168,20 +176,21 @@ impl ops::Div<Unit> for Unit {
     }
 }
 
-/// A `Quantity` represents a raw value and it's unit
-/// that is represented as a const generic parameter.
-#[derive(Clone, Copy, Debug, PartialEq)]
-#[repr(transparent)]
-pub struct Quantity<const U: Unit> {
-    /// The raw value of this `Quantity`
-    pub value: f64,
-}
 
 /// Implement all methods and traits for a quantity type.
 macro_rules! quantity_impl {
     ($num:ty, $t:ident) => {
+        /// A `Quantity` represents a raw value and it's unit
+        /// that is represented as a const generic parameter.
+        #[derive(Clone, Copy, Debug, PartialEq)]
+        #[repr(transparent)]
+        pub struct Quantity<const U: Unit> {
+            /// The raw value of this `Quantity`
+            pub value: $num,
+        }
         impl<const U: Unit> $t<U> {
             /// Create a new `Quantity` with the given value.
+            #[must_use]
             pub const fn new(value: $num) -> Self {
                 Self { value }
             }
@@ -331,4 +340,4 @@ macro_rules! quantity_impl {
     };
 }
 
-quantity_impl!(f64, Quantity);
+quantity_impl!(f32, Quantity);

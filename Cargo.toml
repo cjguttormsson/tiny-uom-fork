@@ -3,12 +3,12 @@ name = "tiny-uom"
 description = "tiny-uom performs type-safe and zero-cost dimensional analysis. Like `uom` but much smaller."
 version = "0.1.0"
 authors = ["Justus K <justus.k@protonmail.com>"]
-edition = "2018"
+edition = "2021"
 readme = "README.md"
 license = "MIT"
 documentation = "https://docs.rs/"
 categories = ["science"]
-keywors = ["si", "units", "dimensional-analysis"]
+keywords = ["si", "units", "dimensional-analysis"]
 repository = "https://github.com/Stupremee/tiny-uom"
 homepage = "https://github.com/Stupremee/tiny-uom"
 
