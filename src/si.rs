@@ -1,30 +1,25 @@
 //! All SI base units and more constants.
 
-#![allow(non_upper_case_globals)]
+#![allow(non_upper_case_globals, dead_code)]
 
-/// Helper macro to generate two constants for every unit,
-/// a unit const, and a value const in two different modules.
-macro_rules! units_impl {
-    ($(
-        $(#[$attr:meta])*
-        $name:ident => $unit:expr
-    ),*$(,)?) => {
-    };
-}
 
-units_impl! {
+// TODO: Use a macro to parameterize this?
+/// Constants for the multiplicative identities of each unit
+pub mod values {
+    use crate::Quantity;
+
     /// Time in seconds
-    s => Unit { s: 1, ..NONE },
+    pub const s: Quantity<0, 0, 1, 0, 0, 0, 0> = Quantity { value: 1.0 };
     /// Length in metre
-    m => Unit { m: 1, ..NONE },
+    pub const m: Quantity<1, 0, 0, 0, 0, 0, 0> = Quantity { value: 1.0 };
     /// Mass in kilogram
-    kg => Unit { kg: 1, ..NONE },
+    pub const kg: Quantity<0, 1, 0, 0, 0, 0, 0> = Quantity { value: 1.0 };
     /// Electric current in ampere
-    A => Unit { A: 1, ..NONE },
+    pub const A: Quantity<0, 0, 0, 0, 0, 0, 0> = Quantity { value: 1.0 };
     /// Temperature in kelvin
-    K => Unit { K: 1, ..NONE },
+    pub const K: Quantity<0, 0, 0, 0, 0, 0, 0> = Quantity { value: 1.0 };
     /// Amount of substance in mole
-    mol => Unit { mol: 1, ..NONE },
+    pub const mol: Quantity<0, 0, 0, 0, 0, 0, 0> = Quantity { value: 1.0 };
     /// Luminous intensity in candela
-    cd => Unit { cd: 1, ..NONE },
+    pub const cd: Quantity<0, 0, 0, 0, 0, 0, 0> = Quantity { value: 1.0 };
 }

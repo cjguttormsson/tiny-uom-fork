@@ -8,11 +8,11 @@
 //!
 //! ## Usage
 //! ```
-//! // use tiny_uom::values::{kg, m, s};
+//! use tiny_uom::values::{kg, m, s};
 //!
 //! # fn main() {
-//! // let distance = 10.0 * m;
-//! // let time = 2.0 * s;
+//! let distance = 10.0 * m;
+//! let time = 2.0 * s;
 //!
 //! // let velocity = distance / time;
 //! // assert_eq!(velocity, 5.0 * (m / s));
@@ -37,7 +37,7 @@
 
 use std::clone::Clone;
 
-// pub use si::{units, values};
+pub use si::{values};
 
 mod si;
 
