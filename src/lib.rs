@@ -8,16 +8,14 @@
 //!
 //! ## Usage
 //! ```
-//! #![feature(adt_const_params, generic_const_exprs)]
-//! #![allow(incomplete_features)]
 //! use tiny_uom::values::{kg, m, s};
 //!
 //! # fn main() {
 //! let distance = 10.0 * m;
 //! let time = 2.0 * s;
 //!
-//! let velocity = distance / time;
-//! assert_eq!(velocity, 5.0 * (m / s));
+//! // let velocity = distance / time;
+//! // assert_eq!(velocity, 5.0 * (m / s));
 //! # }
 //! ```
 //!
@@ -27,7 +25,7 @@
 //! [SI]: https://jcgm.bipm.org/vim/en/1.16.html
 //! [ISQ]: https://jcgm.bipm.org/vim/en/1.6.html
 #![deny(
-    rust_2018_idioms,
+    rust_2021_compatibility,
     warnings,
     clippy::pedantic,
     missing_docs,
@@ -35,18 +33,15 @@
     rustdoc::broken_intra_doc_links,
     unsafe_code
 )]
-#![allow(incomplete_features)]
-#![feature(adt_const_params)]
-#![feature(generic_const_exprs)]
 
-use std::{fmt, ops};
 use std::clone::Clone;
 use std::iter::Iterator;
-use std::marker::ConstParamTy;
 use std::result::Result::Ok;
+use std::{fmt, ops};
+
+pub use si::{units, values};
 
 mod si;
-pub use si::{units, values};
 
 /// The `Unit` struct can represent every possible unit
 /// that is defined in the [`SI`] system.
@@ -72,7 +67,7 @@ pub use si::{units, values};
 /// ```
 ///
 /// [`SI`]: https://jcgm.bipm.org/vim/en/1.16.html
-#[derive(Clone, ConstParamTy, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[allow(non_snake_case)]
 pub struct Unit {
     pub(crate) m: i8,
@@ -300,33 +295,6 @@ macro_rules! quantity_impl {
             fn div(self, rhs: $num) -> Self::Output {
                 Self {
                     value: self.value / rhs,
-                }
-            }
-        }
-
-        impl<const L: Unit, const R: Unit> ::std::ops::Div<$t<R>> for $t<L>
-        where
-            $t<{ L.div(R) }>: ,
-        {
-            type Output = $t<{ L.div(R) }>;
-
-            /// Divides two units and their values.
-            fn div(self, rhs: $t<R>) -> Self::Output {
-                $t {
-                    value: self.value / rhs.value,
-                }
-            }
-        }
-
-        impl<const U: Unit> ::std::ops::Div<$t<U>> for $num
-        where
-            $t<{ U.inv() }>: ,
-        {
-            type Output = $t<{ U.inv() }>;
-
-            fn div(self, rhs: $t<U>) -> Self::Output {
-                $t {
-                    value: self / rhs.value,
                 }
             }
         }
