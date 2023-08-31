@@ -14,8 +14,8 @@
 //! let distance = 10.0 * m;
 //! let time = 2.0 * s;
 //!
-//! // let velocity = distance / time;
-//! // assert_eq!(velocity, 5.0 * (m / s));
+//! let velocity = distance / time;
+//! assert_eq!(velocity, 5.0 * (m / s));
 //! # }
 //! ```
 //!
@@ -37,7 +37,7 @@
 
 use std::clone::Clone;
 
-pub use si::{values};
+pub use si::values;
 
 mod si;
 
@@ -188,3 +188,15 @@ macro_rules! quantity_impl {
     };
 }
 quantity_impl!(f32, Quantity, i8, m, kg, s, A, K, mol, cd);
+
+// Without #![feature(generic_const_exprs)], this must be done manually for every pair of dimensions
+// you want to perform an operation on.
+impl std::ops::Div<Quantity<0, 0, 1, 0, 0, 0, 0>> for Quantity<1, 0, 0, 0, 0, 0, 0> {
+    type Output = Quantity<1, 0, -1, 0, 0, 0, 0>;
+
+    fn div(self, rhs: Quantity<0, 0, 1, 0, 0, 0, 0>) -> Self::Output {
+        Quantity {
+            value: self.value / rhs.value,
+        }
+    }
+}
