@@ -8,11 +8,11 @@
 //!
 //! ## Usage
 //! ```
-//! use tiny_uom::values::{kg, m, s};
+//! // use tiny_uom::values::{kg, m, s};
 //!
 //! # fn main() {
-//! let distance = 10.0 * m;
-//! let time = 2.0 * s;
+//! // let distance = 10.0 * m;
+//! // let time = 2.0 * s;
 //!
 //! // let velocity = distance / time;
 //! // assert_eq!(velocity, 5.0 * (m / s));
@@ -33,13 +33,11 @@
     rustdoc::broken_intra_doc_links,
     unsafe_code
 )]
+#![allow(non_upper_case_globals)]
 
 use std::clone::Clone;
-use std::iter::Iterator;
-use std::result::Result::Ok;
-use std::{fmt, ops};
 
-pub use si::{units, values};
+// pub use si::{units, values};
 
 mod si;
 
@@ -67,140 +65,36 @@ mod si;
 /// ```
 ///
 /// [`SI`]: https://jcgm.bipm.org/vim/en/1.16.html
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[allow(non_snake_case)]
-pub struct Unit {
-    pub(crate) m: i8,
-    pub(crate) kg: i8,
-    pub(crate) s: i8,
-    pub(crate) A: i8,
-    pub(crate) K: i8,
-    pub(crate) mol: i8,
-    pub(crate) cd: i8,
-}
-
-impl Unit {
-    /// Invert this unit by negating all exponents.
-    #[must_use]
-    pub const fn inv(self) -> Self {
-        Self {
-            m: -self.m,
-            kg: -self.kg,
-            s: -self.s,
-            A: -self.A,
-            K: -self.K,
-            mol: -self.mol,
-            cd: -self.cd,
-        }
-    }
-
-    /// Multiply two units and return the resulting unit.
-    #[must_use]
-    pub const fn mul(self, rhs: Self) -> Self {
-        Self {
-            m: self.m + rhs.m,
-            kg: self.kg + rhs.kg,
-            s: self.s + rhs.s,
-            A: self.A + rhs.A,
-            K: self.K + rhs.K,
-            mol: self.mol + rhs.mol,
-            cd: self.cd + rhs.cd,
-        }
-    }
-
-    /// Divide two units and return the resulting unit.
-    #[must_use]
-    pub const fn div(self, rhs: Self) -> Self {
-        Self {
-            m: self.m - rhs.m,
-            kg: self.kg - rhs.kg,
-            s: self.s - rhs.s,
-            A: self.A - rhs.A,
-            K: self.K - rhs.K,
-            mol: self.mol - rhs.mol,
-            cd: self.cd - rhs.cd,
-        }
-    }
-}
-
-impl fmt::Display for Unit {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let units = [
-            ("m", self.m),
-            ("kg", self.kg),
-            ("s", self.s),
-            ("A", self.A),
-            ("K", self.K),
-            ("mol", self.mol),
-            ("cd", self.cd),
-        ];
-
-        let units = units.iter().filter(|unit| unit.1 != 0);
-        let len = units.clone().count();
-
-        for (idx, (name, unit)) in units.enumerate() {
-            if *unit == 1 {
-                write!(f, "{name}")?;
-            } else {
-                write!(f, "{name}^{unit}")?;
-            }
-            if idx + 1 != len {
-                write!(f, " * ")?;
-            }
-        }
-
-        Ok(())
-    }
-}
-
-impl ops::Mul<Unit> for Unit {
-    type Output = Self;
-
-    /// Multiplies two units by adding their exponents.
-    fn mul(self, rhs: Unit) -> Self::Output {
-        self.mul(rhs)
-    }
-}
-
-impl ops::Div<Unit> for Unit {
-    type Output = Self;
-
-    /// Divides two units by substracting their exponents.
-    fn div(self, rhs: Unit) -> Self::Output {
-        self.div(rhs)
-    }
-}
-
 
 /// Implement all methods and traits for a quantity type.
 macro_rules! quantity_impl {
-    ($num:ty, $t:ident) => {
+    ($backing_ty:ty, $quantity:ident, $unit_exp_ty:ty, $($unit:ident),+) => {
         /// A `Quantity` represents a raw value and it's unit
         /// that is represented as a const generic parameter.
         #[derive(Clone, Copy, Debug, PartialEq)]
         #[repr(transparent)]
-        pub struct Quantity<const U: Unit> {
+        pub struct $quantity<$(const $unit: $unit_exp_ty,)*> {
             /// The raw value of this `Quantity`
-            pub value: $num,
+            pub value: $backing_ty,
         }
-        impl<const U: Unit> $t<U> {
+        impl<$(const $unit: $unit_exp_ty,)*> $quantity<$($unit,)*> {
             /// Create a new `Quantity` with the given value.
             #[must_use]
-            pub const fn new(value: $num) -> Self {
+            pub const fn new(value: $backing_ty) -> Self {
                 Self { value }
             }
         }
 
-        impl<const U: Unit> ::std::fmt::Display for $t<U> {
+        impl<$(const $unit: $unit_exp_ty,)*> ::std::fmt::Display for $quantity<$($unit,)*> {
             fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                write!(f, "{} * {}", self.value, U)
+                write!(f, "{} * {:?}", self.value, &[$($unit,)*])
             }
         }
 
         // ============================
         // Add implementations
         // ============================
-        impl<const U: Unit> ::std::ops::Add<$t<U>> for $t<U> {
+        impl<$(const $unit: $unit_exp_ty,)*> ::std::ops::Add<$quantity<$($unit,)*>> for $quantity<$($unit,)*> {
             type Output = Self;
 
             /// Add the value of two equal units.
@@ -211,7 +105,7 @@ macro_rules! quantity_impl {
             }
         }
 
-        impl<const U: Unit> ::std::ops::AddAssign<$t<U>> for $t<U> {
+        impl<$(const $unit: $unit_exp_ty,)*> ::std::ops::AddAssign<$quantity<$($unit,)*>> for $quantity<$($unit,)*> {
             /// Add the value of two equal units.
             fn add_assign(&mut self, rhs: Self) {
                 self.value += rhs.value;
@@ -221,7 +115,7 @@ macro_rules! quantity_impl {
         // ============================
         // Sub implementations
         // ============================
-        impl<const U: Unit> ::std::ops::Sub<$t<U>> for $t<U> {
+        impl<$(const $unit: $unit_exp_ty,)*> ::std::ops::Sub<$quantity<$($unit,)*>> for $quantity<$($unit,)*> {
             type Output = Self;
 
             /// Subtract the value of two equal units.
@@ -232,7 +126,7 @@ macro_rules! quantity_impl {
             }
         }
 
-        impl<const U: Unit> ::std::ops::SubAssign<$t<U>> for $t<U> {
+        impl<$(const $unit: $unit_exp_ty,)*> ::std::ops::SubAssign<$quantity<$($unit,)*>> for $quantity<$($unit,)*> {
             /// Subtract the value of two equal units.
             fn sub_assign(&mut self, rhs: Self) {
                 self.value -= rhs.value;
@@ -242,45 +136,31 @@ macro_rules! quantity_impl {
         // ============================
         // Mul implementations
         // ============================
-        impl<const U: Unit> ::std::ops::Mul<$num> for $t<U> {
+        impl<$(const $unit: $unit_exp_ty,)*> ::std::ops::Mul<$backing_ty> for $quantity<$($unit,)*> {
             type Output = Self;
 
             /// Multiply the value of this unit with a number.
-            fn mul(self, rhs: $num) -> Self::Output {
+            fn mul(self, rhs: $backing_ty) -> Self::Output {
                 Self {
                     value: self.value * rhs,
                 }
             }
         }
 
-        impl<const U: Unit> ::std::ops::Mul<$t<U>> for $num {
-            type Output = $t<U>;
+        impl<$(const $unit: $unit_exp_ty,)*> ::std::ops::Mul<$quantity<$($unit,)*>> for $backing_ty {
+            type Output = $quantity<$($unit,)*>;
 
             /// Multiply the value of this unit with a number.
-            fn mul(self, rhs: $t<U>) -> Self::Output {
-                $t {
+            fn mul(self, rhs: $quantity<$($unit,)*>) -> Self::Output {
+                $quantity {
                     value: self * rhs.value,
                 }
             }
         }
 
-        impl<const L: Unit, const R: Unit> ::std::ops::Mul<$t<R>> for $t<L>
-        where
-            $t<{ L.mul(R) }>: ,
-        {
-            type Output = $t<{ L.mul(R) }>;
-
-            /// Multiply two units and their values
-            fn mul(self, rhs: $t<R>) -> Self::Output {
-                $t {
-                    value: self.value * rhs.value,
-                }
-            }
-        }
-
-        impl<const U: Unit> ::std::ops::MulAssign<$num> for $t<U> {
+        impl<$(const $unit: $unit_exp_ty,)*> ::std::ops::MulAssign<$backing_ty> for $quantity<$($unit,)*> {
             /// Multiply the value of this unit with a number.
-            fn mul_assign(&mut self, rhs: $num) {
+            fn mul_assign(&mut self, rhs: $backing_ty) {
                 self.value *= rhs;
             }
         }
@@ -288,24 +168,23 @@ macro_rules! quantity_impl {
         // ============================
         // Div implementations
         // ============================
-        impl<const U: Unit> ::std::ops::Div<$num> for $t<U> {
+        impl<$(const $unit: $unit_exp_ty,)*> ::std::ops::Div<$backing_ty> for $quantity<$($unit,)*> {
             type Output = Self;
 
             /// Divides the value of this unit with a number.
-            fn div(self, rhs: $num) -> Self::Output {
+            fn div(self, rhs: $backing_ty) -> Self::Output {
                 Self {
                     value: self.value / rhs,
                 }
             }
         }
 
-        impl<const U: Unit> ::std::ops::DivAssign<$num> for $t<U> {
+        impl<$(const $unit: $unit_exp_ty,)*> ::std::ops::DivAssign<$backing_ty> for $quantity<$($unit,)*> {
             /// Divides the value of this unit with a number.
-            fn div_assign(&mut self, rhs: $num) {
+            fn div_assign(&mut self, rhs: $backing_ty) {
                 self.value /= rhs;
             }
         }
     };
 }
-
-quantity_impl!(f32, Quantity);
+quantity_impl!(f32, Quantity, i8, m, kg, s, A, K, mol, cd);

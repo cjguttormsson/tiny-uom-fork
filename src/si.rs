@@ -9,36 +9,6 @@ macro_rules! units_impl {
         $(#[$attr:meta])*
         $name:ident => $unit:expr
     ),*$(,)?) => {
-        /// All SI base units and more constants.
-        pub mod units {
-            use crate::Unit;
-
-            const NONE: Unit = Unit {
-                A: 0,
-                K: 0,
-                cd: 0,
-                kg: 0,
-                m: 0,
-                mol: 0,
-                s: 0,
-            };
-
-            $(
-                $(#[$attr])*
-                pub const $name: Unit = $unit;
-            )*
-        }
-
-        /// All SI base units but wrapped in [`Quantity`](crate::Quantity`)
-        /// with value `1.0`.
-        pub mod values {
-            use crate::Quantity;
-
-            $(
-                $(#[$attr])*
-                pub const $name: Quantity<{ super::units::$name }> = Quantity::new(1.0);
-            )*
-        }
     };
 }
 
